@@ -1,0 +1,25 @@
+# 忽略所有 .zip 文件
+*.zip
+/CS224n/**/*params
+/CS224n/**/*.predictions
+/CS224n/**/model.bin
+/CS224n/**/*.optim
+
+# 忽略 CS231n 目录下的特定文件夹
+/CS231n/**/datasets/
+/CS231n/**/__pycache__/
+/CS231n/**/ppt/
+/CS231n/**/build/
+/CS231n/**/.vscode/
+/CS231n/**/data
+
+# 忽略 CS224n 目录下的特定文件夹
+/CS224n/**/.vscode/
+/CS224n/**/dataset/
+/CS224n/**/__pycache__/
+/CS224n/**/expt/
+/CS224n/**/zh_en_data/
+/CS224n/**/results/
+/CS224n/**/data/
+/CS224n/**/sanity_check_en_es_data/
+CS231n/assignment3_colab/assignment3/data/cifar-10-python.tar.gz

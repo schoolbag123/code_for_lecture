@@ -1,0 +1,72 @@
+channels:
+  - defaults
+  - nvidia
+dependencies:
+  - nvidia::cuda-toolkit==12.1.1
+  - pip
+  - pip:
+    - -r requirements.txt
+
+
+"""计算一个批次的组合输出向量。
+
+@param enc_hiddens (Tensor): 隐藏状态 (b, src_len, h*2)，其中
+                             b = 批次大小, src_len = 最大源句子长度, h = 隐藏大小。
+@param enc_masks (Tensor): 句子掩码张量 (b, src_len)，其中
+                             b = 批次大小, src_len = 最大源句子长度。
+@param dec_init_state (tuple(Tensor, Tensor)): 解码器的初始状态和单元
+@param target_padded (Tensor): 标准的填充目标句子 (tgt_len, b)，其中
+                               tgt_len = 最大目标句子长度, b = 批次大小。
+
+@returns combined_outputs (Tensor): 组合输出张量 (tgt_len, b, h)，其中
+                                    tgt_len = 最大目标句子长度, b = 批次大小, h = 隐藏大小。
+"""
+# 去掉最大长度句子的 <END> 标记。
+target_padded = target_padded[:-1]
+
+# 初始化解码器状态（隐藏和单元）
+dec_state = dec_init_state
+
+# 初始化前一个组合输出向量 o_{t-1} 为零
+batch_size = enc_hiddens.size(0)
+o_prev = torch.zeros(batch_size, self.hidden_size, device=self.device)
+
+# 初始化一个列表，我们将在每一步收集组合输出 o_t
+combined_outputs = []
+
+### 代码编写区 (~9行)
+### TODO:
+###     1. 应用注意力投影层到 `enc_hiddens` 以获得 `enc_hiddens_proj`，应为形状 (b, src_len, h)，
+###         其中 b = 批次大小, src_len = 最大源长度, h = 隐藏大小。
+###         这相当于在 PDF 中描述的对 h^enc 应用 W_{attProj}。
+###     2. 使用目标模型嵌入构建形状为 (tgt_len, b, e) 的目标句子张量 `Y`。
+###         其中 tgt_len = 最大目标句子长度, b = 批次大小, e = 嵌入大小。
+###     3. 使用 torch.split 函数迭代 Y 的时间维度。
+###         在循环内，这将给出形状为 (1, b, e) 的 Y_t，其中 b = 批次大小, e = 嵌入大小。
+###             - 将 Y_t squeeze 成形状为 (b, e) 的张量。
+###             - 通过在最后一个维度上连接 Y_t 和 o_prev 构建 Ybar_t
+###             - 使用 step 函数计算解码器的下一个 (cell, state) 值以及新的组合输出 o_t。
+###             - 将 o_t 附加到 combined_outputs
+###             - 将 o_prev 更新为新的 o_t。
+###     4. 使用 torch.stack 将 combined_outputs 从一个长度为 tgt_len 的 (b, h) 形状的张量列表
+###         转换为一个形状为 (tgt_len, b, h) 的张量，
+###         其中 tgt_len = 最大目标句子长度, b = 批次大小, h = 隐藏大小。
+###
+### 注意:
+###    - 在使用 squeeze() 函数时，请确保指定要 squeeze 的维度。
+###      否则，如果 batch_size = 1，您会意外删除批次维度。
+###
+### 您可能会发现以下一些函数有用：
+###     Zeros Tensor:
+###         https://pytorch.org/docs/stable/generated/torch.zeros.html
+###     Tensor Splitting (iteration):
+###         https://pytorch.org/docs/stable/generated/torch.split.html
+###     Tensor Dimension Squeezing:
+###         https://pytorch.org/docs/stable/generated/torch.squeeze.html
+###     Tensor Concatenation:
+###         https://pytorch.org/docs/stable/generated/torch.cat.html
+###     Tensor Stacking:
+###         https://pytorch.org/docs/stable/generated/torch.stack.html
+
+### 代码编写区
+
